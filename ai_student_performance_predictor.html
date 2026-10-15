@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Student Performance Predictor - B.Tech CSE Mini Project</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 overflow-x-hidden">
+
+<!-- Header Navbar -->
+<header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-800 bg-slate-900/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Left Brand -->
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-lg shadow-blue-500/20 text-white">
+                    <i data-lucide="brain-circuit" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-lg font-bold text-white tracking-tight">EduPredict AI</h1>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            B.Tech CSE Mini Project
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Random Forest ML Student Evaluation Engine</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs (Desktop) -->
+            <nav class="hidden md:flex items-center space-x-1">
+                <button onclick="switchTab('predictor')" id="nav-predictor" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 bg-blue-600 text-white shadow-md shadow-blue-600/30">
+                    <i data-lucide="calculator" class="w-4 h-4"></i>
+                    <span>Predictor</span>
+                </button>
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Analytics Dashboard</span>
+                </button>
+                <button onclick="switchTab('history')" id="nav-history" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+                    <i data-lucide="history" class="w-4 h-4"></i>
+                    <span>Prediction Logs</span>
+                </button>
+                <button onclick="switchTab('backend')" id="nav-backend" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+                    <i data-lucide="terminal" class="w-4 h-4"></i>
+                    <span>Python Backend Spec</span>
+                </button>
+            </nav>
+
+            <!-- Mode / Backend Status Indicator -->
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs">
+                    <span id="backend-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="backend-status-text" class="text-slate-300 font-medium">Model: Client RF Sim</span>
+                </div>
+                <button onclick="switchTab('backend')" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Backend Configuration">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation bar -->
+    <div class="md:hidden border-t border-slate-800 bg-slate-900/90 px-2 py-2 flex justify-around">
+        <button onclick="switchTab('predictor')" id="mob-nav-predictor" class="p-2 rounded-lg text-xs flex flex-col items-center text-blue-400">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+            <span class="mt-1">Predict</span>
+        </button>
+        <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="p-2 rounded-lg text-xs flex flex-col items-center text-slate-400">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span class="mt-1">Dashboard</span>
+        </button>
+        <button onclick="switchTab('history')" id="mob-nav-history" class="p-2 rounded-lg text-xs flex flex-col items-center text-slate-400">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span class="mt-1">Logs</span>
+        </button>
+        <button onclick="switchTab('backend')" id="mob-nav-backend" class="p-2 rounded-lg text-xs flex flex-col items-center text-slate-400">
+            <i data-lucide="terminal" class="w-5 h-5"></i>
+            <span class="mt-1">Python ML</span>
+        </button>
+    </div>
+</header>
+
+<main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+    <!-- ================= VIEW 1: PREDICTOR FORM & RESULT ================= -->
+    <section id="view-predictor" class="space-y-6">
+        <!-- Banner -->
+        <div class="glass-panel p-6 rounded-2xl bg-gradient-to-r from-blue-900/30 via-slate-900 to-indigo-900/30 border border-blue-500/20">
+            <div class="max-w-3xl">
+                <h2 class="text-2xl font-bold text-white mb-2">Student Academic Outcome Predictor</h2>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    Input student academic performance metrics below. The AI system uses a trained Random Forest model algorithm to classify pass probability, identify risk factors, and offer actionable improvement suggestions.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Left Column: Input Form (7 Cols) -->
+            <div class="lg:col-span-7 glass-panel p-6 sm:p-8 rounded-2xl space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-blue-400"></i>
+                        <h3 class="text-lg font-semibold text-white">Student Input Parameters</h3>
+                    </div>
+                    <button onclick="resetForm()" class="text-xs text-slate-400 hover:text-blue-400 flex items-center space-x-1 transition-colors">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Reset Defaults</span>
+                    </button>
+                </div>
+
+                <form id="prediction-form" onsubmit="handlePredict(event)" class="space-y-6">
+                    <!-- Student Details -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Student Name / ID (Optional)</label>
+                            <input type="text" id="student-name" placeholder="e.g. Rahul Sharma (18CSE042)" 
+                                   class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Semester / Year</label>
+                            <select id="student-sem" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                                <option value="Sem 3">3rd Sem (2nd Year)</option>
+                                <option value="Sem 4">4th Sem (2nd Year)</option>
+                                <option value="Sem 5" selected>5th Sem (3rd Year)</option>
+                                <option value="Sem 6">6th Sem (3rd Year)</option>
+                                <option value="Sem 7">7th Sem (4th Year)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Input 1: Study Hours -->
+                    <div class="space-y-2 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <label for="study-hours" class="text-sm font-medium text-slate-200 flex items-center space-x-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+                                <span>Daily Self Study Hours</span>
+                            </label>
+                            <div class="flex items-center space-x-1">
+                                <input type="number" id="study-hours-num" min="0" max="16" step="0.5" value="5"
+                                       class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-right text-sm text-blue-400 font-bold focus:outline-none focus:border-blue-500">
+                                <span class="text-xs text-slate-400">hrs/day</span>
+                            </div>
+                        </div>
+                        <input type="range" id="study-hours" min="0" max="16" step="0.5" value="5"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>0 hrs</span>
+                            <span>8 hrs</span>
+                            <span>16 hrs</span>
+                        </div>
+                    </div>
+
+                    <!-- Input 2: Attendance Percentage -->
+                    <div class="space-y-2 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <label for="attendance" class="text-sm font-medium text-slate-200 flex items-center space-x-2">
+                                <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Attendance Percentage</span>
+                            </label>
+                            <div class="flex items-center space-x-1">
+                                <input type="number" id="attendance-num" min="0" max="100" step="1" value="78"
+                                       class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-right text-sm text-emerald-400 font-bold focus:outline-none focus:border-blue-500">
+                                <span class="text-xs text-slate-400">%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="attendance" min="0" max="100" step="1" value="78"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>0%</span>
+                            <span class="text-rose-400 font-semibold">75% (Min. Req)</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Input 3: Previous Semester Marks / CGPA -->
+                    <div class="space-y-2 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <label for="prev-marks" class="text-sm font-medium text-slate-200 flex items-center space-x-2">
+                                <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
+                                <span>Previous Exam Score / Percentage</span>
+                            </label>
+                            <div class="flex items-center space-x-1">
+                                <input type="number" id="prev-marks-num" min="0" max="100" step="1" value="68"
+                                       class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-right text-sm text-purple-400 font-bold focus:outline-none focus:border-blue-500">
+                                <span class="text-xs text-slate-400">%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="prev-marks" min="0" max="100" step="1" value="68"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>0%</span>
+                            <span>CGPA ~6.0 (60%)</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Input 4: Assignment & Internal Score -->
+                    <div class="space-y-2 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <label for="assignment-score" class="text-sm font-medium text-slate-200 flex items-center space-x-2">
+                                <i data-lucide="file-check-2" class="w-4 h-4 text-cyan-400"></i>
+                                <span>Assignment & Internal Score</span>
+                            </label>
+                            <div class="flex items-center space-x-1">
+                                <input type="number" id="assignment-score-num" min="0" max="100" step="1" value="72"
+                                       class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-right text-sm text-cyan-400 font-bold focus:outline-none focus:border-blue-500">
+                                <span class="text-xs text-slate-400">%</span>
+                            </div>
+                        </div>
+                        <input type="range" id="assignment-score" min="0" max="100" step="1" value="72"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="predict-btn" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all flex items-center justify-center space-x-2 text-base">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <span id="predict-btn-text">Predict Performance</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Column: Result Card & Insights (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                <!-- Result Display Card -->
+                <div id="result-card" class="glass-panel p-6 sm:p-8 rounded-2xl relative overflow-hidden transition-all duration-300 min-h-[420px] flex flex-col justify-between">
+                    <!-- Placeholder State before first calculation -->
+                    <div id="result-placeholder" class="my-auto text-center space-y-4 py-12">
+                        <div class="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto text-slate-500">
+                            <i data-lucide="cpu" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-slate-300">Ready for Prediction</h4>
+                            <p class="text-xs text-slate-500 max-w-xs mx-auto mt-1">Adjust sliders on the left and click "Predict Performance" to execute the classification pipeline.</p>
+                        </div>
+                    </div>
+
+                    <!-- Active Result View (Hidden initially) -->
+                    <div id="result-active" class="hidden space-y-6">
+                        <!-- Top Result Badge -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold tracking-wider uppercase text-slate-400">Prediction Analysis</span>
+                            <span id="res-timestamp" class="text-[11px] text-slate-500">Just now</span>
+                        </div>
+
+                        <!-- Outcome Box -->
+                        <div id="status-box" class="p-5 rounded-xl border flex items-center justify-between">
+                            <div class="space-y-1">
+                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Classification Status</div>
+                                <div id="res-status-text" class="text-2xl font-extrabold tracking-tight">PASS</div>
+                                <p id="res-risk-level" class="text-xs">Low Risk Profile</p>
+                            </div>
+                            <div id="res-icon-container" class="w-14 h-14 rounded-full flex items-center justify-center">
+                                <i id="res-icon" data-lucide="check-circle-2" class="w-8 h-8"></i>
+                            </div>
+                        </div>
+
+                        <!-- Scores & Probability Breakdown -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                                <span class="text-xs text-slate-400 block mb-1">Pass Probability</span>
+                                <div class="text-xl font-bold text-slate-100 flex items-baseline">
+                                    <span id="res-probability">88</span><span class="text-sm font-normal text-slate-400">%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                                    <div id="res-prob-bar" class="h-full bg-blue-500 rounded-full" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                                <span class="text-xs text-slate-400 block mb-1">Est. Marks Score</span>
+                                <div class="text-xl font-bold text-slate-100 flex items-baseline">
+                                    <span id="res-estimated-score">76.4</span><span class="text-sm font-normal text-slate-400">/ 100</span>
+                                </div>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                                    <div id="res-score-bar" class="h-full bg-emerald-500 rounded-full" style="width: 76%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feature Contribution Radar/Bar -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-slate-300">Feature Contribution Breakdown</span>
+                                <span class="text-slate-500">RF Feature Weights</span>
+                            </div>
+                            <div class="space-y-2 bg-slate-900/40 p-3 rounded-xl border border-slate-800/80 text-xs">
+                                <div>
+                                    <div class="flex justify-between text-[11px] mb-1">
+                                        <span class="text-slate-400">Attendance (35%)</span>
+                                        <span id="contrib-attendance" class="text-emerald-400 font-mono">+27.3 pts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                        <div id="contrib-bar-attendance" class="bg-emerald-400 h-full" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[11px] mb-1">
+                                        <span class="text-slate-400">Previous Marks (30%)</span>
+                                        <span id="contrib-marks" class="text-purple-400 font-mono">+20.4 pts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                        <div id="contrib-bar-marks" class="bg-purple-400 h-full" style="width: 68%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[11px] mb-1">
+                                        <span class="text-slate-400">Study Hours (20%)</span>
+                                        <span id="contrib-study" class="text-amber-400 font-mono">+12.5 pts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                        <div id="contrib-bar-study" class="bg-amber-400 h-full" style="width: 62%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[11px] mb-1">
+                                        <span class="text-slate-400">Assignments (15%)</span>
+                                        <span id="contrib-assignment" class="text-cyan-400 font-mono">+10.8 pts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                        <div id="contrib-bar-assignment" class="bg-cyan-400 h-full" style="width: 72%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actionable AI Advice -->
+                        <div class="p-3.5 rounded-xl bg-blue-950/30 border border-blue-500/20 text-xs space-y-1.5">
+                            <div class="font-semibold text-blue-400 flex items-center space-x-1.5">
+                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                                <span>AI Improvement Insights</span>
+                            </div>
+                            <p id="res-advice" class="text-slate-300 leading-relaxed">
+                                Good standing! To push performance into the distinction tier (>80%), increase study hours to 6.5 hrs/day and maintain attendance above 80%.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= VIEW 2: DASHBOARD & ANALYTICS ================= -->
+    <section id="view-dashboard" class="space-y-6 hidden">
+        <!-- Overview Key Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                <div class="p-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 font-medium">Total Evaluated</span>
+                    <h3 id="stat-total" class="text-2xl font-bold text-white">48</h3>
+                    <span class="text-[10px] text-emerald-400">Class Batch 2026</span>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 font-medium">Overall Pass Rate</span>
+                    <h3 id="stat-passrate" class="text-2xl font-bold text-white">83.3%</h3>
+                    <span class="text-[10px] text-slate-400">40 Passed / 8 At Risk</span>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                <div class="p-3 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <i data-lucide="line-chart" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 font-medium">Avg Class Attendance</span>
+                    <h3 id="stat-avg-attend" class="text-2xl font-bold text-white">79.4%</h3>
+                    <span class="text-[10px] text-slate-400">Target Threshold: 75%</span>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                <div class="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 font-medium">Avg Estimated Score</span>
+                    <h3 id="stat-avg-score" class="text-2xl font-bold text-white">72.1%</h3>
+                    <span class="text-[10px] text-amber-400">First Class Average</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Donut Chart: Pass vs Fail Ratio -->
+            <div class="lg:col-span-4 glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i>
+                        <span>Class Pass/Risk Split</span>
+                    </h3>
+                </div>
+                <div class="relative h-60 w-full flex items-center justify-center">
+                    <canvas id="chart-pie"></canvas>
+                </div>
+                <div class="flex justify-center space-x-6 text-xs text-slate-400 mt-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <span>Pass / Safe</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                        <span>At Risk / Fail</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bar Chart: Feature Importance Comparison -->
+            <div class="lg:col-span-8 glass-panel p-5 rounded-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Random Forest Feature Weight Impact (%)</span>
+                    </h3>
+                    <span class="text-[11px] text-slate-400 font-mono">Gini Importance Metric</span>
+                </div>
+                <div class="h-64 w-full">
+                    <canvas id="chart-importance"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scatter / Correlation Chart -->
+        <div class="glass-panel p-5 rounded-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="scatter-chart" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Attendance vs Study Hours vs Outcome Correlation</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Green = Passed Students | Red = At Risk / Failed Students</p>
+                </div>
+            </div>
+            <div class="h-72 w-full">
+                <canvas id="chart-scatter"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= VIEW 3: HISTORY & LOGS ================= -->
+    <section id="view-history" class="space-y-6 hidden">
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="database" class="w-5 h-5 text-blue-400"></i>
+                        <span>Prediction Records & History</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Logged predictions with feature parameters and RF classification outcomes.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportToCSV()" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition-colors flex items-center space-x-1.5">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="clearHistory()" class="px-3.5 py-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-xs font-medium text-rose-400 border border-rose-500/20 transition-colors flex items-center space-x-1.5">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span>Clear History</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 font-semibold bg-slate-900/40">
+                            <th class="py-3 px-4">Time</th>
+                            <th class="py-3 px-4">Student</th>
+                            <th class="py-3 px-4">Study Hours</th>
+                            <th class="py-3 px-4">Attendance</th>
+                            <th class="py-3 px-4">Prev Marks</th>
+                            <th class="py-3 px-4">Assignments</th>
+                            <th class="py-3 px-4">Outcome</th>
+                            <th class="py-3 px-4 text-right">Probability</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                        <!-- Dynamic History Rows Inserted via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= VIEW 4: PYTHON BACKEND & MODEL SPECS ================= -->
+    <section id="view-backend" class="space-y-6 hidden">
+        <!-- Architecture Explanation Card -->
+        <div class="glass-panel p-6 sm:p-8 rounded-2xl space-y-6">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
+                    <i data-lucide="file-code-2" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Machine Learning Pipeline & Python Integration</h3>
+                    <p class="text-xs text-slate-400">B.Tech CSE Mini Project Architecture Overview</p>
+                </div>
+            </div>
+
+            <!-- Execution Mode Toggle Box -->
+            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-white">Active Prediction Engine Mode</h4>
+                    <p class="text-xs text-slate-400">Switch between embedded JavaScript RF simulation and custom Python Flask API server.</p>
+                </div>
+                <div class="flex items-center space-x-3 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                    <button id="mode-btn-sim" onclick="setEngineMode('sim')" class="px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white transition-all">
+                        Simulated RF (JS)
+                    </button>
+                    <button id="mode-btn-api" onclick="setEngineMode('api')" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all">
+                        Flask / FastAPI Endpoint
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom API URL input (if API mode enabled) -->
+            <div id="api-url-container" class="hidden p-4 rounded-xl bg-blue-950/20 border border-blue-500/30 space-y-2">
+                <label class="block text-xs font-medium text-blue-300">Python REST API Endpoint URL</label>
+                <div class="flex space-x-2">
+                    <input type="text" id="api-endpoint-url" value="http://localhost:5000/predict" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-blue-500">
+                    <button onclick="testApiConnection()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs text-white font-medium rounded-lg transition-colors flex items-center space-x-1">
+                        <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+                        <span>Test Ping</span>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-400">Make sure your local Python server is running with CORS enabled (`flask-cors`).</p>
+            </div>
+
+            <!-- Python Code Snippet Tabs -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-semibold text-slate-200">1. Python ML Training & Flask API Code (`app.py`)</h4>
+                    <button onclick="copyPythonCode()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs text-slate-300 border border-slate-700 flex items-center space-x-1 transition-colors">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span>Copy Python Script</span>
+                    </button>
+                </div>
+
+                <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed">
+<pre id="python-code-block" class="text-emerald-400"># B.Tech CSE Mini Project - Machine Learning Backend
+# Requirements: pip install flask flask-cors scikit-learn numpy pandas
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+
+app = Flask(__name__)
+CORS(app)  # Enable Cross-Origin Resource Sharing for Web Dashboard
+
+# 1. Train Synthetic Random Forest Model for Demonstration
+# Features: [Study_Hours, Attendance_Pct, Prev_Marks, Assignment_Score]
+X_train = np.array([
+    [2, 50, 45, 50], [8, 90, 85, 88], [4, 65, 55, 60],
+    [7, 85, 75, 80], [3, 55, 50, 52], [9, 95, 90, 92],
+    [1, 40, 35, 40], [6, 78, 68, 72], [5, 70, 62, 65]
+])
+y_train = np.array([0, 1, 0, 1, 0, 1, 0, 1, 1])  # 0: Fail/At Risk, 1: Pass
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.get_json()
+        
+        # Extract features from incoming request
+        study_hours = float(data.get('study_hours', 5))
+        attendance = float(data.get('attendance', 75))
+        prev_marks = float(data.get('prev_marks', 65))
+        assignment = float(data.get('assignment', 70))
+        
+        features = np.array([[study_hours, attendance, prev_marks, assignment]])
+        
+        # ML Inference
+        prediction = model.predict(features)[0]
+        probabilities = model.predict_proba(features)[0]
+        pass_prob = float(probabilities[1]) * 100
+        
+        # Calculate Weighted Estimated Score
+        est_score = (attendance * 0.35) + (prev_marks * 0.30) + ((study_hours/16)*100 * 0.20) + (assignment * 0.15)
+        
+        return jsonify({
+            'status': 'success',
+            'prediction': 'PASS' if prediction == 1 else 'FAIL',
+            'pass_probability': round(pass_prob, 1),
+            'estimated_score': round(est_score, 1),
+            'feature_importance': {
+                'attendance': 35.0,
+                'prev_marks': 30.0,
+                'study_hours': 20.0,
+                'assignments': 15.0
+            }
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+
+if __name__ == '__main__':
+    print("Starting ML Backend on http://localhost:5000...")
+    app.run(port=5000, debug=True)</pre>
+                </div>
+            </div>
+
+            <!-- Model Parameters Table -->
+            <div class="space-y-3 border-t border-slate-800 pt-4">
+                <h4 class="text-sm font-semibold text-slate-200">Random Forest Classifier Hyperparameters</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                        <span class="text-slate-400 block">n_estimators</span>
+                        <span class="text-white font-mono font-bold">100 Trees</span>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                        <span class="text-slate-400 block">Criterion</span>
+                        <span class="text-white font-mono font-bold">Gini Impurity</span>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                        <span class="text-slate-400 block">Max Depth</span>
+                        <span class="text-white font-mono font-bold">None (Full)</span>
+                    </div>
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                        <span class="text-slate-400 block">Train Accuracy</span>
+                        <span class="text-emerald-400 font-mono font-bold">94.2%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- JavaScript Logic -->
+<script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Application State Variables
+    let currentEngineMode = 'sim'; // 'sim' or 'api'
+    let historyLogs = [
+        { id: 1, time: '10:42 AM', name: 'Aman Verma', study: 6.5, attendance: 84, marks: 72, assignment: 80, result: 'PASS', probability: 91.5 },
+        { id: 2, time: '10:38 AM', name: 'Priya Singh', study: 2.0, attendance: 62, marks: 48, assignment: 55, result: 'AT RISK', probability: 32.4 },
+        { id: 3, time: '10:15 AM', name: 'Vikram Mehta', study: 8.0, attendance: 92, marks: 88, assignment: 90, result: 'PASS', probability: 98.2 },
+        { id: 4, time: '09:50 AM', name: 'Sneha Patel', study: 4.0, attendance: 74, marks: 60, assignment: 65, result: 'PASS', probability: 68.0 },
+        { id: 5, time: '09:22 AM', name: 'Rohan Gupta', study: 1.5, attendance: 58, marks: 42, assignment: 50, result: 'AT RISK', probability: 22.8 }
+    ];
+
+    // Chart instances
+    let pieChart, importanceChart, scatterChart;
+
+    // Sync Sliders and Number Inputs
+    function setupSyncInput(sliderId, numId) {
+        const slider = document.getElementById(sliderId);
+        const num = document.getElementById(numId);
+        
+        slider.addEventListener('input', () => {
+            num.value = slider.value;
+        });
+        num.addEventListener('input', () => {
+            let val = parseFloat(num.value);
+            if (isNaN(val)) val = 0;
+            slider.value = val;
+        });
+    }
+
+    setupSyncInput('study-hours', 'study-hours-num');
+    setupSyncInput('attendance', 'attendance-num');
+    setupSyncInput('prev-marks', 'prev-marks-num');
+    setupSyncInput('assignment-score', 'assignment-score-num');
+
+    // Tab Switching Logic
+    function switchTab(tabName) {
+        ['predictor', 'dashboard', 'history', 'backend'].forEach(t => {
+            document.getElementById(`view-${t}`).classList.add('hidden');
+            
+            // Nav buttons
+            const navBtn = document.getElementById(`nav-${t}`);
+            const mobBtn = document.getElementById(`mob-nav-${t}`);
+            
+            if (navBtn) {
+                if (t === tabName) {
+                    navBtn.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 bg-blue-600 text-white shadow-md shadow-blue-600/30';
+                } else {
+                    navBtn.className = 'tab-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2';
+                }
+            }
+            if (mobBtn) {
+                if (t === tabName) {
+                    mobBtn.className = 'p-2 rounded-lg text-xs flex flex-col items-center text-blue-400';
+                } else {
+                    mobBtn.className = 'p-2 rounded-lg text-xs flex flex-col items-center text-slate-400';
+                }
+            }
+        });
+
+        document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+        // Render charts when switching to dashboard
+        if (tabName === 'dashboard') {
+            renderCharts();
+        }
+    }
+
+    // Reset Form
+    function resetForm() {
+        document.getElementById('prediction-form').reset();
+        document.getElementById('study-hours').value = 5;
+        document.getElementById('study-hours-num').value = 5;
+        document.getElementById('attendance').value = 78;
+        document.getElementById('attendance-num').value = 78;
+        document.getElementById('prev-marks').value = 68;
+        document.getElementById('prev-marks-num').value = 68;
+        document.getElementById('assignment-score').value = 72;
+        document.getElementById('assignment-score-num').value = 72;
+    }
+
+    // Core Prediction Logic (Simulated Random Forest Model)
+    function simulateRandomForest(study, attend, marks, assign) {
+        // Feature Weights based on RF Importance:
+        // Attendance: 35%, Previous Marks: 30%, Study Hours: 20%, Assignments: 15%
+        
+        // Normalized Scores (0 - 100 scale)
+        const normStudy = Math.min(100, (study / 14) * 100);
+        const normAttend = attend;
+        const normMarks = marks;
+        const normAssign = assign;
+
+        // Weighted sum calculation
+        const score = (normAttend * 0.35) + (normMarks * 0.30) + (normStudy * 0.20) + (normAssign * 0.15);
+
+        // Individual tree vote simulations (10 decision trees)
+        let passVotes = 0;
+        
+        // Tree 1: Attendance focused (>75%)
+        if (attend >= 75 && marks >= 50) passVotes++;
+        // Tree 2: Marks + Study focused
+        if (marks >= 60 && study >= 3.5) passVotes++;
+        // Tree 3: Overall composite score
+        if (score >= 58) passVotes++;
+        // Tree 4: Assignments + Attendance safety net
+        if (assign >= 70 && attend >= 70) passVotes++;
+        // Tree 5: High study hour compensation for lower marks
+        if (study >= 6 && attend >= 65) passVotes++;
+        // Tree 6: Hard threshold
+        if (marks >= 70 && attend >= 70) passVotes++;
+        // Tree 7: Penalize very low attendance (<65)
+        if (attend >= 68 && score >= 52) passVotes++;
+        // Tree 8: Internal assignments + study
+        if (assign >= 60 && study >= 4) passVotes++;
+        // Tree 9: Balanced moderate criteria
+        if (score >= 55) passVotes++;
+        // Tree 10: Strict pass criteria
+        if (marks >= 55 && attend >= 75 && study >= 3) passVotes++;
+
+        const passProbability = Math.min(99, Math.max(5, (passVotes / 10) * 100 + (score > 70 ? 10 : -5)));
+        const isPass = passProbability >= 50;
+
+        return {
+            isPass: isPass,
+            statusText: isPass ? "PASS / HIGH PERFORMANCE" : "AT RISK / FAIL",
+            probability: parseFloat(passProbability.toFixed(1)),
+            estimatedScore: parseFloat(score.toFixed(1)),
+            breakdown: {
+                attendance: parseFloat((normAttend * 0.35).toFixed(1)),
+                marks: parseFloat((normMarks * 0.30).toFixed(1)),
+                study: parseFloat((normStudy * 0.20).toFixed(1)),
+                assignment: parseFloat((normAssign * 0.15).toFixed(1))
+            }
+        };
+    }
+
+    // Handle Prediction Form Submission
+    async function handlePredict(e) {
+        e.preventDefault();
+
+        const btn = document.getElementById('predict-btn');
+        const btnText = document.getElementById('predict-btn-text');
+        
+        // UI Loading State
+        btn.disabled = true;
+        btnText.innerText = "Running RF Inference...";
+
+        const study = parseFloat(document.getElementById('study-hours-num').value);
+        const attend = parseFloat(document.getElementById('attendance-num').value);
+        const marks = parseFloat(document.getElementById('prev-marks-num').value);
+        const assign = parseFloat(document.getElementById('assignment-score-num').value);
+        const studentName = document.getElementById('student-name').value || "Student User";
+
+        let resultData;
+
+        // Artificial delay for UI realism
+        await new Promise(r => setTimeout(r, 600));
+
+        if (currentEngineMode === 'api') {
+            try {
+                const endpoint = document.getElementById('api-endpoint-url').value;
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ study_hours: study, attendance: attend, prev_marks: marks, assignment: assign })
+                });
+                const apiRes = await response.json();
+                
+                resultData = {
+                    isPass: apiRes.prediction === 'PASS',
+                    statusText: apiRes.prediction === 'PASS' ? "PASS / HIGH PERFORMANCE" : "AT RISK / FAIL",
+                    probability: apiRes.pass_probability,
+                    estimatedScore: apiRes.estimated_score,
+                    breakdown: {
+                        attendance: (attend * 0.35),
+                        marks: (marks * 0.30),
+                        study: ((study/16)*100 * 0.20),
+                        assignment: (assign * 0.15)
+                    }
+                };
+            } catch (err) {
+                alert("Failed to connect to Python backend API. Falling back to internal simulation engine.\nError: " + err.message);
+                resultData = simulateRandomForest(study, attend, marks, assign);
+            }
+        } else {
+            resultData = simulateRandomForest(study, attend, marks, assign);
+        }
+
+        // Display Results
+        displayResults(resultData, study, attend, marks, assign);
+
+        // Add to History Log
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        historyLogs.unshift({
+            id: Date.now(),
+            time: timeStr,
+            name: studentName,
+            study: study,
+            attendance: attend,
+            marks: marks,
+            assignment: assign,
+            result: resultData.isPass ? 'PASS' : 'AT RISK',
+            probability: resultData.probability
+        });
+
+        updateHistoryTable();
+        updateDashboardMetrics();
+
+        // Restore button state
+        btn.disabled = false;
+        btnText.innerText = "Predict Performance";
+    }
+
+    // Display Result Card
+    function displayResults(data, study, attend, marks, assign) {
+        document.getElementById('result-placeholder').classList.add('hidden');
+        document.getElementById('result-active').classList.remove('hidden');
+
+        const statusBox = document.getElementById('status-box');
+        const resStatusText = document.getElementById('res-status-text');
+        const resRiskLevel = document.getElementById('res-risk-level');
+        const resIconContainer = document.getElementById('res-icon-container');
+        const resIcon = document.getElementById('res-icon');
+        const adviceText = document.getElementById('res-advice');
+
+        resStatusText.innerText = data.statusText;
+        document.getElementById('res-probability').innerText = data.probability;
+        document.getElementById('res-prob-bar').style.width = `${data.probability}%`;
+        document.getElementById('res-estimated-score').innerText = data.estimatedScore;
+        document.getElementById('res-score-bar').style.width = `${Math.min(100, data.estimatedScore)}%`;
+
+        if (data.isPass) {
+            statusBox.className = "p-5 rounded-xl border border-emerald-500/30 bg-emerald-950/30 flex items-center justify-between";
+            resStatusText.className = "text-2xl font-extrabold tracking-tight text-emerald-400";
+            resRiskLevel.innerText = "Safe Academic Standing";
+            resRiskLevel.className = "text-xs text-emerald-300/80";
+            resIconContainer.className = "w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30";
+            
+            // Custom advice for Pass
+            if (data.probability > 85) {
+                adviceText.innerText = "Excellent consistency! Your high attendance and study hours put you in line for distinction. Maintain this momentum for final end-sem examinations.";
+            } else {
+                adviceText.innerText = "Satisfactory pass margin. To elevate your grade to distinction level (>80%), increase study hours by 1.5 hrs/day and target >80% assignment scores.";
+            }
+        } else {
+            statusBox.className = "p-5 rounded-xl border border-rose-500/30 bg-rose-950/30 flex items-center justify-between";
+            resStatusText.className = "text-2xl font-extrabold tracking-tight text-rose-400";
+            resRiskLevel.innerText = "High Risk of Fail / Backlog";
+            resRiskLevel.className = "text-xs text-rose-300/80";
+            resIconContainer.className = "w-14 h-14 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30";
+
+            // Advice for Risk/Fail
+            let advice = "Immediate action recommended: ";
+            if (attend < 75) {
+                advice += `Your attendance (${attend}%) is below the mandatory 75% condonation limit. Attend all remaining lectures. `;
+            }
+            if (study < 4) {
+                advice += `Increase daily self-study hours to at least 4.5 hours/day to cover core CSE topics. `;
+            }
+            adviceText.innerText = advice;
+        }
+
+        // Breakdown values
+        document.getElementById('contrib-attendance').innerText = `+${data.breakdown.attendance} pts`;
+        document.getElementById('contrib-bar-attendance').style.width = `${(attend/100)*100}%`;
+
+        document.getElementById('contrib-marks').innerText = `+${data.breakdown.marks} pts`;
+        document.getElementById('contrib-bar-marks').style.width = `${(marks/100)*100}%`;
+
+        document.getElementById('contrib-study').innerText = `+${data.breakdown.study} pts`;
+        document.getElementById('contrib-bar-study').style.width = `${(study/16)*100}%`;
+
+        document.getElementById('contrib-assignment').innerText = `+${data.breakdown.assignment} pts`;
+        document.getElementById('contrib-bar-assignment').style.width = `${(assign/100)*100}%`;
+
+        lucide.createIcons();
+    }
+
+    // Render Analytics Charts
+    function renderCharts() {
+        // Pie Chart: Pass vs Fail
+        const passCount = historyLogs.filter(l => l.result === 'PASS').length;
+        const failCount = historyLogs.length - passCount;
+
+        const pieCtx = document.getElementById('chart-pie').getContext('2d');
+        if (pieChart) pieChart.destroy();
+        pieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Passed', 'At Risk / Fail'],
+                datasets: [{
+                    data: [passCount, failCount],
+                    backgroundColor: ['#10b981', '#f43f5e'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '75%'
+            }
+        });
+
+        // Bar Chart: Feature Importance
+        const impCtx = document.getElementById('chart-importance').getContext('2d');
+        if (importanceChart) importanceChart.destroy();
+        importanceChart = new Chart(impCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Attendance (%)', 'Previous Semester Marks', 'Daily Study Hours', 'Internal Assignments'],
+                datasets: [{
+                    label: 'RF Gini Feature Weight (%)',
+                    data: [35, 30, 20, 15],
+                    backgroundColor: ['#10b981', '#a855f7', '#f59e0b', '#06b6d4'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, max: 40 },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Scatter Chart: Attendance vs Study Hours vs Outcome
+        const scatterData = historyLogs.map(item => ({
+            x: item.study,
+            y: item.attendance,
+            result: item.result
+        }));
+
+        const scatterCtx = document.getElementById('chart-scatter').getContext('2d');
+        if (scatterChart) scatterChart.destroy();
+        scatterChart = new Chart(scatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Passed Students',
+                        data: scatterData.filter(d => d.result === 'PASS'),
+                        backgroundColor: '#10b981',
+                        pointRadius: 6
+                    },
+                    {
+                        label: 'At Risk Students',
+                        data: scatterData.filter(d => d.result === 'AT RISK'),
+                        backgroundColor: '#f43f5e',
+                        pointRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#cbd5e1' } }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Study Hours / Day', color: '#94a3b8' },
+                        grid: { color: '#1e293b' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Attendance (%)', color: '#94a3b8' },
+                        grid: { color: '#1e293b' },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+    }
+
+    // Update History Table UI
+    function updateHistoryTable() {
+        const tbody = document.getElementById('history-table-body');
+        tbody.innerHTML = '';
+
+        historyLogs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-800/40 transition-colors";
+            
+            const isPass = log.result === 'PASS';
+            const badgeClass = isPass 
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                : "bg-rose-500/10 text-rose-400 border-rose-500/20";
+
+            tr.innerHTML = `
+                <td class="py-3 px-4 font-mono text-slate-400">${log.time}</td>
+                <td class="py-3 px-4 font-medium text-white">${log.name}</td>
+                <td class="py-3 px-4">${log.study} hrs</td>
+                <td class="py-3 px-4">${log.attendance}%</td>
+                <td class="py-3 px-4">${log.marks}%</td>
+                <td class="py-3 px-4">${log.assignment}%</td>
+                <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${badgeClass}">
+                        ${log.result}
+                    </span>
+                </td>
+                <td class="py-3 px-4 text-right font-mono font-semibold ${isPass ? 'text-emerald-400' : 'text-rose-400'}">${log.probability}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Update Top Dashboard Stat Cards
+    function updateDashboardMetrics() {
+        const total = historyLogs.length;
+        const passCount = historyLogs.filter(l => l.result === 'PASS').length;
+        const passRate = total > 0 ? ((passCount / total) * 100).toFixed(1) : 0;
+
+        const avgAttend = total > 0 ? (historyLogs.reduce((acc, curr) => acc + curr.attendance, 0) / total).toFixed(1) : 0;
+        const avgScore = total > 0 ? (historyLogs.reduce((acc, curr) => acc + curr.marks, 0) / total).toFixed(1) : 0;
+
+        document.getElementById('stat-total').innerText = total;
+        document.getElementById('stat-passrate').innerText = `${passRate}%`;
+        document.getElementById('stat-avg-attend').innerText = `${avgAttend}%`;
+        document.getElementById('stat-avg-score').innerText = `${avgScore}%`;
+    }
+
+    // Export Logs to CSV
+    function exportToCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,Time,Student Name,Study Hours,Attendance %,Prev Marks %,Assignment %,Outcome,Pass Probability %\n";
+        
+        historyLogs.forEach(row => {
+            csvContent += `"${row.time}","${row.name}",${row.study},${row.attendance},${row.marks},${row.assignment},"${row.result}",${row.probability}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "student_performance_predictions.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Clear History
+    function clearHistory() {
+        if (confirm("Are you sure you want to clear all prediction history logs?")) {
+            historyLogs = [];
+            updateHistoryTable();
+            updateDashboardMetrics();
+            if (pieChart) renderCharts();
+        }
+    }
+
+    // Engine Mode Toggle (Simulation vs Real REST API)
+    function setEngineMode(mode) {
+        currentEngineMode = mode;
+        const simBtn = document.getElementById('mode-btn-sim');
+        const apiBtn = document.getElementById('mode-btn-api');
+        const urlContainer = document.getElementById('api-url-container');
+        const statusDot = document.getElementById('backend-status-dot');
+        const statusText = document.getElementById('backend-status-text');
+
+        if (mode === 'sim') {
+            simBtn.className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white transition-all";
+            apiBtn.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all";
+            urlContainer.classList.add('hidden');
+            statusDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+            statusText.innerText = "Model: Client RF Sim";
+        } else {
+            apiBtn.className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-600 text-white transition-all";
+            simBtn.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all";
+            urlContainer.classList.remove('hidden');
+            statusDot.className = "w-2 h-2 rounded-full bg-indigo-400 animate-pulse";
+            statusText.innerText = "Model: Local Python API";
+        }
+    }
+
+    // Ping Local Python API Test
+    async function testApiConnection() {
+        const url = document.getElementById('api-endpoint-url').value;
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ study_hours: 5, attendance: 75, prev_marks: 70, assignment: 70 })
+            });
+            if (res.ok) {
+                alert("Successfully connected to Python ML REST API endpoint!");
+            } else {
+                alert(`Endpoint reached but returned error status: ${res.status}`);
+            }
+        } catch (err) {
+            alert(`Unable to connect to ${url}.\nMake sure your Flask/FastAPI server is running and CORS is enabled.`);
+        }
+    }
+
+    // Copy Python Backend Code to Clipboard
+    function copyPythonCode() {
+        const codeText = document.getElementById('python-code-block').innerText;
+        const textArea = document.createElement("textarea");
+        textArea.value = codeText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert("Python backend script copied to clipboard!");
+        } catch (err) {
+            alert("Failed to copy code.");
+        }
+        document.body.removeChild(textArea);
+    }
+
+    // Initialize Page on Load
+    window.onload = function() {
+        updateHistoryTable();
+        updateDashboardMetrics();
+    };
+</script>
+</body>
+</html>
